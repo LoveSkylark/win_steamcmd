@@ -6,7 +6,7 @@ networks:
 
 services:
   steamcmd:
-    image: win_steamcmd
+    image: loveskylark/win_steamcmd:1.0.0
     hostname: SteamCMD
     container_name: ark_asa
     restart: unless-stopped

@@ -41,16 +41,12 @@ start_logging_to_terminal () {
     return
   fi
 
-  # Find the line to start tailing from
-  local START_LINE
-  START_LINE=$(find_new_log_entries)
 }
 
-start_server() {
+run_server() {
 
   # Start the server with conditional arguments
-  echo "Starting game server:"
-  #FIXEME: remove ARK
+  echo "Starting the ${GAME_NAME} server:"
   echo "Running: ${GAME_EXE} ${GAME_ARG}"
   wine "${GAME_DIR}/${GAME_NAME}${GAME_EXE}" \
     "${GAME_ARG}" 2>/dev/null &
@@ -64,6 +60,10 @@ start_server() {
 
   start_logging_to_terminal
 
+  # Find the line to start tailing from
+  local START_LINE
+  START_LINE=$(find_new_log_entries)
+
   # Tail the ShooterGame log file starting from the new session entries
   tail -n +"$START_LINE" -f "$LOG_FILE" &
   local TAIL_PID
@@ -72,24 +72,25 @@ start_server() {
   # Wait for the server to fully start
   echo "Waiting for server to start..."
   while true; do
-    if grep -q "wp.Runtime.HLOD" "$LOG_FILE"; then
-      echo "Server started. PID: $SERVER_PID"
-      break
-    fi
-    sleep 10
-  done
+  if grep -q "wp.Runtime.HLOD" "$LOG_FILE"; then
+    echo "Server started. PID: $SERVER_PID"
+    break
+  fi
+  sleep 10
+done
 
-  # Wait for the server process to exit
-  wait $SERVER_PID
+# Wait for the server process to exit
+wait $SERVER_PID
 
-  # Kill the tail process when the server stops
-  kill $TAIL_PID
+# Kill the tail process when the server stops
+echo "Server is shuting down..."
+kill $TAIL_PID
 }
 
 # Main function
 main() {
   archive_logs
-  start_server
+  run_server
 }
 
 # Start the main execution

@@ -26,11 +26,12 @@ archive_logs() {
   fi
 }
 
-wait_for_logs () {
+start_logging_to_terminal () {
   # Wait for the log file to be created with a timeout
+  #TODO: see if I can't clean this up
   echo "waiting for ${LOG_FILE}"
   local TIMEOUT
-  TIMEOUT=20
+  TIMEOUT=120
   while [[ ! -f "${LOG_FILE}" && $TIMEOUT -gt 0 ]]; do
     sleep 1
     ((TIMEOUT--))
@@ -39,26 +40,18 @@ wait_for_logs () {
     echo "Log file not found after waiting. Please check server status."
     return
   fi
+
+  # Find the line to start tailing from
+  local START_LINE
+  START_LINE=$(find_new_log_entries)
 }
 
 start_server() {
-  # Set BattlEye flag based on environment variable
-  if [ "${BATTLEEYE,,}" = "true" ]; then
-    battleye_arg="-UseBattlEye"
-  else
-    echo "WARNING: BattlEye is disabled."
-    battleye_arg="-NoBattlEye"
-  fi
-
-  if [ -n "${CUSTOM_SERVER_ARGS}" ]; then
-    custom_args="${CUSTOM_SERVER_ARGS}"
-  fi
-
 
   # Start the server with conditional arguments
-
   echo "Starting game server:"
-  echo "Running: ArkAscendedServer.exe ${GAME_ARG}"
+  #FIXEME: remove ARK
+  echo "Running: ${GAME_EXE} ${GAME_ARG}"
   wine "${GAME_DIR}/${GAME_NAME}${GAME_EXE}" \
     "${GAME_ARG}" 2>/dev/null &
 
@@ -69,11 +62,7 @@ start_server() {
   echo $SERVER_PID > $DIR/game.pid
   echo "PID $SERVER_PID written to $DIR/game.pid"
 
-  wait_for_logs
-
-  # Find the line to start tailing from
-  local START_LINE
-  START_LINE=$(find_new_log_entries)
+  start_logging_to_terminal
 
   # Tail the ShooterGame log file starting from the new session entries
   tail -n +"$START_LINE" -f "$LOG_FILE" &

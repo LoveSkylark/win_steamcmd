@@ -6,7 +6,7 @@ networks:
 
 services:
   steamcmd:
-    image: loveskylark/win_steamcmd:1.0.0
+    image: win_steamcmd
     hostname: SteamCMD
     container_name: ark_asa
     restart: unless-stopped
@@ -26,21 +26,22 @@ services:
       GAME_NAME: "ARK Survival Ascended Dedicated Server"
       GAME_LOG: "/ShooterGame/Saved/Logs/ShooterGame.log"
       GAME_EXE: "/ShooterGame/Binaries/Win64/ArkAscendedServer.exe"
-      GAME_ARG: "TheIsland_WP?listen? -WinLiveMaxPlayers=5 -clusterid=cluster -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs -NotifyAdminCommandsInChat -nosteamclient"
-   
-      
-      SERVER_NAME: ""
+      GAME_ARG: "TheIsland_WP?listen??ServerAdminPassword=GT? -WinLiveMaxPlayers=5 -clusterid=cluster -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs -NotifyAdminCommandsInChat -nosteamclient"
+
 
     ports:
-      - "7777:7777/tcp"
+      # - "7777:7777/tcp"
       - "7777:7777/udp"
-      - "27015:27015/tcp"
-      - "27015:27015/udp"
-      - "27016:27016/tcp"
-      - "27016:27016/udp"
+      # - "27015:27015/tcp"
+      # - "27015:27015/udp"
+      # - "27016:27016/tcp"
+      # - "27016:27016/udp"
 
     volumes:
-      - "/data/steam:/home/wineuser/.wine/drive_c/Steam/steamapps/common"
-      - "./GameUserSettings.ini:/home/wineuser/.wine/drive_c/Steam/steamapps/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Config/WindowsServer/GameUserSettings.ini"
-      - "./Game.ini:/home/wineuser/.wine/drive_c/Steam/steamapps/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Config/WindowsServer/Game.ini"
+      - "/data/steam2:/usr/games/.wine/drive_c/Steam/steamapps/common"
+      # If GAME_ARG is not enought to configure your server
+      # you can map the config files directly into the Docker 
+      #
+      #- "./GameUserSettings.ini:/usr/games/.wine/drive_c/Steam/steamapps/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Config/WindowsServer/GameUserSettings.ini"
+      #- "./Game.ini:/usr/games/.wine/drive_c/Steam/steamapps/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Config/WindowsServer/Game.ini"
     mem_limit: 24G

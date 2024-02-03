@@ -26,6 +26,95 @@ function get_current_build_id() {
   echo "$current_id"
 }
 
+function run_update() {
+    local username=anonymous
+    local acf_file="$GAME_DIR/$GAME_NAME/appmanifest_$GAME_ID.acf"
+    
+    touch "${UPDATE_FILE}"
+    echo "Staring to update the Server."
+    echo ""
+    sudo wine "${STEAM_DIR}/steamcmd.exe" +login "${username}" +force_install_dir "${GAME_DIR}/${GAME_NAME}/" +app_update "$GAME_ID" +@sSteamCmdForcePlatformType windows +quit  2>/dev/null
+    
+    # Copy the acf file to the persistent volume
+    echo "${STEAM_DIR}/steamapps/appmanifest_$GAME_ID.acf" 
+    echo $acf_file
+
+    cp "${STEAM_DIR}/steamapps/appmanifest_$GAME_ID.acf" "${acf_file}"
+    
+    return 1
+    echo "Installation or update completed successfully."
+    rm -f ${DIR}/updating.flag
+}
+
+function start_server() {
+  local server_exe="${GAME_DIR}/${GAME_NAME}/${GAME_EXE}"
+
+  # Start server process in background
+  sudo wine "${server_exe}" "${GAME_ARG}" &> /dev/null &
+
+  # Save PID of server process
+  local server_pid=$!
+
+  # Write PID to file
+  echo "${server_pid}" > "${PID_FILE}"
+
+  # Check for error writing PID
+  if [[ $? -ne 0 ]]; then
+    echo "Error writing PID file" >&2
+    kill "${server_pid}"
+    return 1
+  fi
+  echo "Server has started"
+  # Wait for server to be ready before providing PID
+  while ! wait_for_ready; do sleep 10; done
+
+  # Return PID on success
+  echo "${server_pid}"
+}
+
+function restart_server() {
+  echo "Gracefully shutting down the Game server..."
+  send_rcon_command "DoExit"
+
+  # Wait for a bit to ensure the server has completely shut down
+  sleep 30
+
+  echo "Starting the Game server..."
+
+  start_server
+}
+
+function is_process_running() {
+  # if PID file exist check if proccess with same number is running
+  if [ -f "$PID_FILE" ]; then
+    local pid
+    pid="$(cat "$PID_FILE")"
+
+    if ! ps -p "$pid" >/dev/null 2>&1; then
+      return 1
+    fi
+  fi
+}
+
+function is_server_updating() {
+  if ! [ -f "${UPDATE_FILE}" ]; then
+    return 1 
+  fi
+}
+
+function is_time_to_check() {
+  local current_time="$(date +%s)" 
+  # local interval_seconds=$((CHECK_INTERVAL * 3600))
+  local interval_seconds=$((CHECK_INTERVAL * 60))
+  echo "Math: $current_time - ${1} > $interval_seconds"
+
+  if (( $current_time - ${1} > $interval_seconds )); then
+    echo "Update Timer Triggered"
+    echo "$current_time" > "${TIME_FILE}"
+    return 1
+  fi
+}
+
 function check_for_updates() {
   local saved_id
   local current_id
@@ -53,79 +142,11 @@ function check_for_updates() {
   fi
 }
 
-function run_update() {
-    local username=anonymous
-    local acf_file="$GAME_DIR/$GAME_NAME/appmanifest_$GAME_ID.acf"
-    
-    touch "${DIR}/updating.flag"
-    echo "Staring to update the Server."
-    echo ""
-    wine "${STEAM_DIR}/steamcmd.exe" +login "${username}" +force_install_dir "${GAME_DIR}/${GAME_NAME}" +app_update "$GAME_ID" +@sSteamCmdForcePlatformType windows +quit  2>/dev/null
-    
-    # Copy the acf file to the persistent volume
-    echo "${STEAM_DIR}/steamapps/appmanifest_$GAME_ID.acf" 
-    echo $acf_file
-
-    cp "${STEAM_DIR}/steamapps/appmanifest_$GAME_ID.acf" "${acf_file}"
-    
-    return 1
-    echo "Installation or update completed successfully."
-    rm -f ${DIR}/updating.flag
-}
-
-function start_server() {
-  local server_exe="${GAME_DIR}/${GAME_NAME}${GAME_EXE}"
-
-  # Start server process in background
-  wine "${server_exe}" "${GAME_ARG}" &> /dev/null &
-
-  # Save PID of server process
-  local server_pid=$!
-
-  # Write PID to file
-  echo "${server_pid}" > "${DIR}/game.pid"
-
-  # Check for error writing PID
-  if [[ $? -ne 0 ]]; then
-    echo "Error writing PID file" >&2
-    kill "${server_pid}"
-    return 1
-  fi
-  echo "Server has started"
-  # Wait for server to be ready before providing PID
-  while ! wait_for_ready; do sleep 10; done
-
-  # Return PID on success
-  echo "${server_pid}"
-}
-function restart_server() {
-  echo "Gracefully shutting down the Game server..."
-  send_rcon_command "DoExit"
-
-  # Wait for a bit to ensure the server has completely shut down
-  sleep 30
-
-  echo "Starting the Game server..."
-
-  start_server
-
-}
-
-function is_process_running() {
-  # if PID file exist check if proccess with same number is running
-  if [ -f "$PID_FILE" ]; then
-    local pid
-    pid="$(cat "$PID_FILE")"
-
-    if ! ps -p "$pid" >/dev/null 2>&1; then
-      return 1
-    fi
-  fi
-}
-
-function is_server_updating() {
-  if ! [ -f "${DIR}/updating.flag" ]; then
-    return 1 
+function check_last_update_check () {
+  if [ -f "${TIME_FILE}" ]; then
+    echo "$(cat "$TIME_FILE")"
+  else
+    echo "0"
   fi
 }
 
@@ -201,7 +222,7 @@ function notify_players() {
   local seconds_remaining=60
   while [ "$minutes_remaining" -le 1 ] && [ "$minutes_remaining" -gt 0 ]; do
     send_rcon_command "Say Restarting in $seconds_remaining seconds"
-    sleep 10
+    sleep 10ne
     seconds_remaining=$((seconds_remaining - 10))
   done
 }

@@ -1,0 +1,42 @@
+
+version: '3.7'
+
+networks:
+  internal:
+    driver: bridge
+
+services:
+  steamcmd:
+    image: loveskylark/win_steamcmd:latest
+    hostname: SteamCMD
+    container_name: ark_asa
+    restart: unless-stopped
+    networks:
+      - internal
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 8.8.8.8
+      - 8.8.4.4
+
+    environment:
+      TZ: America/Chicago
+      #GAME_ID can be found at: https://steamdb.info/apps/
+      GAME_ID: 2430930
+      #GAME_NAME has to be exact for correct folder structure
+      GAME_NAME: "ARK Survival Ascended Dedicated Server"
+      GAME_LOG: "/ShooterGame/Saved/Logs/ShooterGame.log"
+      GAME_EXE: "/ShooterGame/Binaries/Win64/ArkAscendedServer.exe"
+      GAME_ARG: "TheIsland_WP?listen?SessionName=ARKserver?ServerPassword=password?ServerAdminPassword=adminpass? -WinLiveMaxPlayers=10 -clusterid=cluster -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs -NotifyAdminCommandsInChat -nosteamclient"
+
+    ports:
+      - "7777:7777/udp"
+
+    volumes:
+      - "/data/steam:/usr/games/.wine/drive_c/Steam/steamapps/common"
+      # Map the config files needed directly into the container
+      - "./GameUserSettings.ini:/usr/games/.wine/drive_c/Steam/steamapps/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Config/WindowsServer/GameUserSettings.ini"
+      - "./Game.ini:/usr/games/.wine/drive_c/Steam/steamapps/common/ARK Survival Ascended Dedicated Server/ShooterGame/Saved/Config/WindowsServer/Game.ini"
+    mem_limit: 24G
+
+

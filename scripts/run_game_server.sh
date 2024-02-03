@@ -2,7 +2,7 @@
 
 . ${DIR}/scripts/functions.sh
 
-LOG_FILE="${GAME_DIR}/${GAME_NAME}${GAME_LOG}"
+LOG_FILE="${GAME_DIR}/${GAME_NAME}/${GAME_LOG}"
 
 main() {
 
@@ -21,6 +21,8 @@ main() {
   echo "#########################  Staring the game server #########################"
   SERVER_PID=$(start_server) &
 
+  
+  
   logging_to_terminal
   
   # Wait for server exit

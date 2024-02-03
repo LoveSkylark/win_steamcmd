@@ -19,12 +19,14 @@ check_vm_max_map_count() {
 # Main function
 main() {
   check_vm_max_map_count
+ 
+  # echo "Home dir: ${DIR}"
+  # echo "Windows dir: ${WINE_DIR}"
+  # echo "Steam dir: ${STEAM_DIR}"
+  # echo "Game dir: ${GAME_DIR}/${GAME_NAME}/"
   
-  # crontab -l ; echo "* * * * * echo "Hello world" >> /var/log/cron.log" | crontab
+  ${DIR}/scripts/monitoring_game_server.sh &
 
-  # ${DIR}/scripts/monitoring_game_server.sh
-  # cron &
-  # ${DIR}/scripts/monitoring_game_server.sh &
   exec ${DIR}/scripts/run_game_server.sh
 }
 

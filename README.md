@@ -19,28 +19,5 @@ The image is built on the `scottyhardy/docker-wine` Docker image and uses bash s
 4. `GAME_ARG` - The arguments used to configure[^1] he server no FIXME:
 5. `GAME_LOG` - Location game Log, used for healthmonitoring of the container and outpintig log FIXME:
 
-[^1]: Any configuration not suportead as an argument can be done by volume mapping config files into the container (*see [games/ARK Survival Ascended Dedicated Server/docker-compose.yaml](https://github.com/LoveSkylark/win_steamcmd/blob/main/games/ARK%20Survival%20Ascended%20Dedicated%20Server/docker-compose.yaml) for an example*)
-
-
-### 
-
-
-
-## Copy
-docker build -t win_steamcmd .
-docker run -it --rm -v <path/to/steam/depot>:/home/steamcmd win_steamcmd <commands>
-Mount the local Steam depot folder (where game files are stored) into the container so SteamCMD can access them.
-
-Then pass SteamCMD commands as arguments, such as:
-
-Copy
-docker run -it --rm -v /path/to/steam/depot:/home/steamcmd win_steamcmd force_install_dir 730 validate
-To update a specific appid.
-
-Things to note
-Wine is used to run SteamCMD in a Windows-like environment. Performance may vary.
-The base image is debian:buster-slim for a small final image size.
-Make sure to mount the local Steam depot folder for game files to be accessible.
-Pass SteamCMD commands as arguments when running the container.
-Any cached files or configs in /home/steamcmd will persist between runs.
-Let me know if any part of the README needs more explanation or examples!
+[^1]: Any configuration not suportead as an argument can be done by volume mapping config files into the container (*see [games/Ark_Survival_Ascended/docker-compose.yaml](https://github.com/LoveSkylark/win_steamcmd/tree/main/games/Ark_Survival_Ascended) for an example*)
+c
